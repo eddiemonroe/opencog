@@ -1,0 +1,119 @@
+{
+	"rules": 
+	[
+
+
+	  {
+		"name": "pln-rule-abduction",
+		"file_path": "reasoning/pln/rules/abduction.scm",
+		"priority": 1,
+		"mutex":
+		[
+
+		],
+
+		"category": "PLN"
+	  },
+
+	  {
+		"name": "pln-rule-deduction",
+		"file_path": "reasoning/pln/rules/deduction.scm",
+		"priority": 1,
+		"mutex":
+		[
+
+		],
+
+		"category": "PLN"
+	  },
+
+	  {
+		"name": "pln-rule-evaluation-to-member-0",
+		"file_path": "reasoning/pln/rules/evaluation-to-member.scm",
+		"priority": 1,
+		"mutex":
+		[
+
+		],
+
+		"category": "PLN"
+	  },
+
+	  {
+		"name": "pln-rule-evaluation-to-member-1",
+		"file_path": "reasoning/pln/rules/evaluation-to-member.scm",
+		"priority": 1,
+		"mutex":
+		[
+
+		],
+
+		"category": "PLN"
+	  },
+
+	  {
+		"name": "pln-rule-evaluation-to-member-2",
+		"file_path": "reasoning/pln/rules/evaluation-to-member.scm",
+		"priority": 1,
+		"mutex":
+		[
+
+		],
+
+		"category": "PLN"
+	  },
+
+	  {
+		"name": "pln-rule-inheritance-to-member",
+		"file_path": "reasoning/pln/rules/inheritance-to-member.scm",
+		"priority": 1,
+		"mutex":
+		[
+
+		],
+
+		"category": "PLN"
+	  },
+
+	  {
+		"name": "pln-rule-member-to-evaluation",
+		"file_path": "reasoning/pln/rules/member-to-evaluation.scm",
+		"priority": 1,
+		"mutex":
+		[
+
+		],
+
+		"category": "PLN"
+	  },
+
+	  {
+		"name": "pln-rule-member-to-inheritance",
+		"file_path": "reasoning/pln/rules/member-to-inheritance.scm",
+		"priority": 1,
+		"mutex":
+		[
+
+		],
+
+		"category": "PLN"
+	  },
+
+	  {
+		"name": "pln-rule-modus-ponens",
+		"file_path": "reasoning/pln/rules/modus-ponens.scm",
+		"priority": 1,
+		"mutex":
+		[
+
+		],
+
+		"category": "PLN"
+	  }
+
+	],
+
+	"attention_allocation": false,
+	"max_iter": 1,
+	"log_level": "FINE"
+}
