@@ -74,7 +74,10 @@ IF (HAVE_ATOMSPACE)
 
 	INSTALL (TARGETS cogserver_type_constructors
 		DESTINATION "${DATADIR}/python/opencog")
+	
 ENDIF (HAVE_ATOMSPACE)
+
+	
 
 
 IF (HAVE_SERVER)
@@ -109,6 +112,7 @@ IF (HAVE_SERVER)
 
 	####################### agent finder ########################
 	CYTHON_ADD_MODULE_PYX(agent_finder
+		"${ATOMSPACE_INCLUDE_DIR}/opencog/cython/opencog/atomspace.pxd"
 		"cogserver.pxd"
 		"../../server/Agent.h" "../../server/Request.h"
 		"../../spacetime/SpaceServer.h" "../../spacetime/TimeServer.h"
