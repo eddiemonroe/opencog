@@ -16,7 +16,15 @@
 				(VariableNode "$C"))
 			(InheritanceLink
 				(VariableNode "$B")
-				(VariableNode "$C")))
+				(VariableNode "$C"))
+			; To avoid matching (Inheritance A B) and (Inheritance A B)
+			(NotLink
+				(EqualLink
+					(VariableNode "$A")
+					(VariableNode "$B")
+				)
+			)
+		)
 		(ExecutionOutputLink
 			(GroundedSchemaNode "scm: pln-formula-abduction")
 			(ListLink
