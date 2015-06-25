@@ -1,3 +1,8 @@
+; This rule assigns the relation between a preposition and its object-noun,
+; such as "on the table" and "in bed."
+; (AN June 2015)
+
+
 (define pp
     (BindLink
         (VariableList
