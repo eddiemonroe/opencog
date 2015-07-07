@@ -4,7 +4,7 @@
 
 (load "opencog/reasoning/pln/rules/deduction.scm")
 (load "opencog/reasoning/pln/rules/modus-ponens.scm")
-(load "opencog/reasoning/pln/rules/member-to-inheritance.scm")
+(load "opencog/reasoning/pln/rules/member-to-inheritance-rule.scm")
 (load "opencog/reasoning/pln/rules/abduction.scm")
 
 ; Define a new rule base (aka rule-based system)
@@ -48,3 +48,7 @@
    (PredicateNode "URE:attention-allocation")
    (ConceptNode "bio-rule-base")
 )
+
+
+(define rules (ConceptNode "bio-rule-base"))
+
