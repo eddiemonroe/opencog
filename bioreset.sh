@@ -24,6 +24,9 @@ sleep 4
 (echo "scm"; echo "(clear)") | nc localhost 17001 &> /dev/null
 ~/opencog/bio-data/scheme-representations/load-scheme-representation.sh
 
+# load the bio ure config file
+(echo "(load \"../bio-ure-config.scm\")" ) | nc localhost 17001 &> /dev/null
+
 # play a nice sound
 paplay /usr/share/sounds/ubuntu/stereo/service-login.ogg
 

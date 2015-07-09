@@ -25,6 +25,9 @@ sleep 4
 (echo "loadpy bio" ) | nc localhost 17001 &> /dev/null
 (echo "(clear)" ; echo "(load1K)") | nc localhost 17001 &> /dev/null
 
+# load the bio ure config file
+(echo "(load \"../bio-ure-config.scm\")" ) | nc localhost 17001 &> /dev/null
+
 # play a nice sound
 paplay /usr/share/sounds/ubuntu/stereo/service-login.ogg
 
