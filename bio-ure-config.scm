@@ -50,5 +50,5 @@
 )
 
 
-(define rules (ConceptNode "bio-rule-base"))
+(define biorules (ConceptNode "bio-rule-base"))
 
