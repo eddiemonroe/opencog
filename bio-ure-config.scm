@@ -3,10 +3,10 @@
 ;
 
 (load "opencog/reasoning/pln/rules/deduction.scm")
-(load "opencog/reasoning/pln/rules/modus-ponens.scm")
+;(load "opencog/reasoning/pln/rules/modus-ponens.scm")
 (load "opencog/reasoning/pln/rules/member-to-inheritance-rule.scm")
 (load "opencog/reasoning/pln/rules/inheritance-to-member-rule.scm")
-(load "opencog/reasoning/pln/rules/abduction.scm")
+;(load "opencog/reasoning/pln/rules/abduction.scm")
 
 ; Define a new rule base (aka rule-based system)
 (InheritanceLink
@@ -21,10 +21,10 @@
    pln-rule-deduction
    (ConceptNode "bio-rule-base")
 )
-(MemberLink (stv 0.5 1)
-   pln-rule-modus-ponens
-   (ConceptNode "bio-rule-base")
-)
+;(MemberLink (stv 0.5 1)
+;   pln-rule-modus-ponens
+;   (ConceptNode "bio-rule-base")
+;)
 
 (MemberLink (stv 0.5 1)
    pln-rule-member-to-inheritance
@@ -36,16 +36,16 @@
    (ConceptNode "bio-rule-base")
 )
 
-(MemberLink (stv 0.5 1)
-   pln-rule-abduction 
-   (ConceptNode "bio-rule-base")
-)
+;(MemberLink (stv 0.5 1)
+;   pln-rule-abduction
+;   (ConceptNode "bio-rule-base")
+;)
 
 ; Termination criteria parameters
 (ExecutionLink
    (SchemaNode "URE:maximum-iterations")
    (ConceptNode "bio-rule-base")
-   (NumberNode "1")
+   (NumberNode "10")
 )
 
 ; Attention allocation (set the TV strength to 0 to disable it, 1 to

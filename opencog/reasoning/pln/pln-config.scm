@@ -42,8 +42,10 @@
 ;;;;;;;;;;;;;;;;
 
 ; Load the rules (use load for relative path w.r.t. to that file)
-(define rule-files (list "rules/deduction.scm"
-                         "rules/modus-ponens.scm"))
+(define rule-files (list "/home/eddie/opencog/opencog/opencog/reasoning/pln/rules/deduction.scm"
+                         "/home/eddie/opencog/opencog/opencog/reasoning/pln/rules/modus-ponens.scm"
+                         "/home/eddie/opencog/opencog/opencog/reasoning/pln/rules/member-to-inheritance-rule.scm"
+                         ))
 (for-each load rule-files)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -52,7 +54,10 @@
 
 ; List the rules and their weights.
 (define rules (list (list pln-rule-deduction 1)
-                    (list pln-rule-modus-ponens 1))
+                    (list pln-rule-modus-ponens 1)
+                    (list pln-rule-member-to-inheritance 1)
+
+                    )
 )
 
 ; Associate rules to PLN
@@ -63,7 +68,12 @@
 ;;;;;;;;;;;;;;;;;;;;;
 
 ; Termination criteria parameters
-(ure-set-num-parameter pln-rbs "URE:maximum-iterations" 20)
+;(ure-set-num-parameter pln-rbs "URE:maximum-iterations" 20)
+(ExecutionLink
+   (SchemaNode "URE:maximum-iterations")
+   (ConceptNode "PLN")
+   (NumberNode "10")
+)
 
 ; Attention allocation (0 to disable it, 1 to enable it)
 (ure-set-fuzzy-bool-parameter pln-rbs "URE:attention-allocation" 0)
