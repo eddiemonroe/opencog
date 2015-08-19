@@ -55,9 +55,7 @@
 ; List the rules and their weights.
 (define rules (list (list pln-rule-deduction 1)
                     (list pln-rule-modus-ponens 1)
-                    (list pln-rule-member-to-inheritance 1)
-
-                    )
+                    (list pln-rule-member-to-inheritance 1))
 )
 
 ; Associate rules to PLN
