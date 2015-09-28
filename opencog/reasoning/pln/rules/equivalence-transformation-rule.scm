@@ -19,7 +19,6 @@
 ;       pln-rule-intensional-equivalence-transformation
 ;       pln-rule-extensional-equivalence-transformation
 ;
-;
 ; -----------------------------------------------------------------------------
 
 (define pln-rule-equivalence-transformation
@@ -59,7 +58,7 @@
   pln-rule-equivalence-transformation)
 
 
-
+;------------------------------------------------------------------------------
 ; IntensionalEquivalanceTransformationRule
 ;
 (define pln-rule-intensional-equivalence-transformation
@@ -90,3 +89,35 @@
 (DefineLink
   pln-rule-intensional-equivalence-transformation-name
   pln-rule-intensional-equivalence-transformation)
+
+
+; ExtensionalEquivalanceTransformationRule
+;
+(define pln-rule-extensional-equivalence-transformation
+    (BindLink
+        (VariableList
+            (VariableNode "$A")
+            (VariableNode "$B"))
+        (ExtensionalEquivalenceLink
+            (VariableNode "$A")
+            (VariableNode "$B"))
+        (ExecutionOutputLink
+            (GroundedSchemaNode "scm:pln-formula-equivalence-transformation")
+            (ListLink
+                (AndLink
+                    (ExtensionalImplicationLink
+                        (VariableNode "$A")
+                        (VariableNode "$B"))
+                    (ExtensionalImplicationLink
+                        (VariableNode "$B")
+                        (VariableNode "$A")))
+                (ExtensionalEquivalenceLink
+                    (VariableNode "$A")
+                    (VariableNode "$B"))))))
+
+; Name the rule
+(define pln-rule-extensional-equivalence-transformation-name
+  (Node "pln-rule-extensional-equivalence-transformation"))
+(DefineLink
+  pln-rule-extensional-equivalence-transformation-name
+  pln-rule-extensional-equivalence-transformation)
