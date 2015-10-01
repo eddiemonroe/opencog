@@ -100,3 +100,56 @@
 ; Name the rule
 (define pln-rule-deduction-name (Node "pln-rule-deduction"))
 (DefineLink pln-rule-deduction-name pln-rule-deduction)
+
+
+; -----------------------------------------------------------------------------
+; IntensionalImplicationLink version
+; -----------------------------------------------------------------------------
+(define pln-rule-deduction-intensional-implication
+    (BindLink
+        (VariableList
+            (VariableNode "$A")
+            (VariableNode "$B")
+            (VariableNode "$C"))
+        (AndLink
+            (IntensionalImplicationLink
+                (VariableNode "$A")
+                (VariableNode "$B")
+            )
+            (IntensionalImplicationLink
+                (VariableNode "$B")
+                (VariableNode "$C")
+            )
+            ; To avoid matching (Inheritance A B) and (Inheritance B A)
+            (NotLink
+                (EqualLink
+                    (VariableNode "$A")
+                    (VariableNode "$C")
+                )
+            )
+        )
+        (ExecutionOutputLink
+            (GroundedSchemaNode "scm: pln-formula-simple-deduction")
+            (ListLink
+                (IntensionalImplicationLink
+                    (VariableNode "$A")
+                    (VariableNode "$B"))
+                (IntensionalImplicationLink
+                    (VariableNode "$B")
+                    (VariableNode "$C")
+                )
+                (IntensionalImplicationLink
+                    (VariableNode "$A")
+                    (VariableNode "$C")
+                )
+            )
+        )
+    )
+)
+
+; Name the rule
+(define pln-rule-deduction-intensional-implication-name
+    (Node "pln-rule-deduction-intensional-implication"))
+(DefineLink pln-rule-deduction-intensional-implication-name
+    pln-rule-deduction-intensional-implication)
+
