@@ -86,6 +86,49 @@
                     (VariableNode "$A")
                     (VariableNode "$C"))))))
 
+;; Todo: There are 2 copies of this now--one in deduction.scm and one in
+;;       deduction-rule.scm
+(define pln-rule-deduction-intensional-implication
+    (BindLink
+        (VariableList
+            (VariableNode "$A")
+            (VariableNode "$B")
+            (VariableNode "$C"))
+        (AndLink
+            (VariableNode "$A")
+            (VariableNode "$B")
+            (VariableNode "$C")
+            (IntensionalImplicationLink
+                (VariableNode "$A")
+                (VariableNode "$B"))
+            (IntensionalImplicationLink
+                (VariableNode "$B")
+                (VariableNode "$C")))
+        (ExecutionOutputLink
+            (GroundedSchemaNode "scm: pln-formula-deduction")
+            (ListLink
+                (VariableNode "$A")
+                (VariableNode "$B")
+                (VariableNode "$C")
+                (IntensionalImplicationLink
+                    (VariableNode "$A")
+                    (VariableNode "$B"))
+                (IntensionalImplicationLink
+                    (VariableNode "$B")
+                    (VariableNode "$C"))
+                (IntensionalImplicationLink
+                    (VariableNode "$A")
+                    (VariableNode "$C"))))))
+
+
+; Name the rule
+(define pln-rule-deduction-intensional-implication-name
+    (Node "pln-rule-deduction-intensional-implication"))
+(DefineLink pln-rule-deduction-intensional-implication-name
+    pln-rule-deduction-intensional-implication)
+
+
+
 (define pln-rule-deduction-subset
     (BindLink
         (VariableList

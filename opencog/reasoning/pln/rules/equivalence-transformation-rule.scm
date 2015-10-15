@@ -59,7 +59,7 @@
 
 
 ;------------------------------------------------------------------------------
-; IntensionalEquivalanceTransformationRule
+; IntensionalEquivalance version
 ;
 (define pln-rule-intensional-equivalence-transformation
     (BindLink
