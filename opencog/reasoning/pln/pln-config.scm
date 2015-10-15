@@ -54,8 +54,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; List the rules and their weights.
-(define rules (list (list pln-rule-deduction-name 1)
-                    (list pln-rule-modus-ponens-name 1))
+(define rules (list (list deduction-rule-name 1)
+                    (list modus-ponens-rule-name 1))
 )
 
 ; Associate rules to PLN
