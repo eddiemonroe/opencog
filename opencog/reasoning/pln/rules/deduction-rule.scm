@@ -105,7 +105,7 @@
                 (VariableNode "$B")
                 (VariableNode "$C")))
         (ExecutionOutputLink
-            (GroundedSchemaNode "scm: pln-formula-deduction")
+            (GroundedSchemaNode "scm: deduction-formula")
             (ListLink
                 (VariableNode "$A")
                 (VariableNode "$B")
