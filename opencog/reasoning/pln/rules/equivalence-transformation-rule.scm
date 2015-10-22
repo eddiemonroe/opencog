@@ -43,7 +43,6 @@
                     (VariableNode "$A")
                     (VariableNode "$B"))))))
 
-
 (define (equivalence-transformation-formula AII EV)
     (cog-set-tv!
         (list-ref (cog-outgoing-set AII) 1) (cog-tv EV))
