@@ -44,7 +44,7 @@
                     (VariableNode "$B"))))))
 
 
-(define (equivalence-transofrmation-formula AII EV)
+(define (equivalence-transformation-formula AII EV)
     (cog-set-tv!
         (list-ref (cog-outgoing-set AII) 1) (cog-tv EV))
     AII)
@@ -70,7 +70,7 @@
             (VariableNode "$A")
             (VariableNode "$B"))
         (ExecutionOutputLink
-            (GroundedSchemaNode "scm:pln-formula-equivalence-transformation")
+            (GroundedSchemaNode "scm: equivalence-transformation-formula")
             (ListLink
                 (AndLink
                     (IntensionalImplicationLink
@@ -102,7 +102,7 @@
             (VariableNode "$A")
             (VariableNode "$B"))
         (ExecutionOutputLink
-            (GroundedSchemaNode "scm:pln-formula-equivalence-transformation")
+            (GroundedSchemaNode "scm: equivalence-transformation-formula")
             (ListLink
                 (AndLink
                     (ExtensionalImplicationLink
