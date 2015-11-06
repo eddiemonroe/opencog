@@ -44,18 +44,18 @@
 ; Load the rules (use load for relative path w.r.t. to that file)
 (define config-dir (dirname (current-filename)))
 (define (prepend-config-dir fp) (string-append config-dir "/" fp))
-(define rule-files (list "rules/deduction.scm"
-                         "rules/modus-ponens.scm"))
-(for-each load-from-path rule-files)
+(define rule-files (list "rules/deduction-rule.scm"
+                         "rules/modus-ponens-rule.scm"))
 ;(for-each (lambda (fp) (load (prepend-config-dir fp))) rule-files)
+(for-each load-from-path rule-files)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Associate rules to PLN ;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; List the rules and their weights.
-(define rules (list (list deduction-rule-name 1)
-                    (list modus-ponens-rule-name 1))
+(define rules (list (list deduction-inheritance-rule-name 1)
+                    (list modus-ponens-implication-rule-name 1))
 )
 
 ; Associate rules to PLN
