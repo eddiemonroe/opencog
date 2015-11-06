@@ -129,7 +129,7 @@
             )
         )
         (ExecutionOutputLink
-            (GroundedSchemaNode "scm: pln-formula-simple-deduction")
+            (GroundedSchemaNode "scm: simple-deduction-formula")
             (ListLink
                 (IntensionalImplicationLink
                     (VariableNode "$A")

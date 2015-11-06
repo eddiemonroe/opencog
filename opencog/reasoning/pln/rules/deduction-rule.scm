@@ -69,7 +69,12 @@
                 (VariableNode "$B"))
             (ImplicationLink
                 (VariableNode "$B")
-                (VariableNode "$C")))
+                (VariableNode "$C"))
+            ; To avoid matching (Inheritance A B) and (Inheritance B A)
+            (NotLink
+                (EqualLink
+                    (VariableNode "$A")
+                    (VariableNode "$C"))))
         (ExecutionOutputLink
             (GroundedSchemaNode "scm: deduction-formula")
             (ListLink
@@ -172,6 +177,20 @@
          (cAB (cog-stv-confidence AB))
          (sBC (cog-stv-strength BC))
          (cBC (cog-stv-confidence BC)))
+       (display "\ndeduction-formula:\n")
+       (display "A = ") (display A) (newline)
+       (display "B = ") (display B) (newline)
+       (display "C = ") (display C) (newline)
+       (display "sA = ") (display sA) (newline)
+       (display "sB = ") (display sB) (newline)
+       (display "sC = ") (display sC) (newline)
+       (display "sAB = ") (display sAB) (newline)
+       (display "sBC = ") (display sBC) (newline)
+       (display "cAB = ") (display cAB) (newline)
+       (display "cBC = ") (display cBC) (newline)
+       (display "strength = ") (display (simple-deduction-strength-formula sA sB sC sAB sBC))(newline)
+       ;(display ", confidence = ") (display confidence)
+
         (cog-set-tv!
             AC
             (stv
