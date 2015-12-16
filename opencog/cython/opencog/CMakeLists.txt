@@ -67,17 +67,66 @@ IF (HAVE_ATOMSPACE)
 		${ATOMSPACE_LIBRARIES}
 		${PYTHON_LIBRARIES}
 	)
-	
+
 	SET_TARGET_PROPERTIES(cogserver_type_constructors PROPERTIES
 		PREFIX ""
 		OUTPUT_NAME cogserver_type_constructors)
 
 	INSTALL (TARGETS cogserver_type_constructors
 		DESTINATION "${DATADIR}/python/opencog")
-	
-ENDIF (HAVE_ATOMSPACE)
+    IF (HAVE_OCTOMAP)
+	############################ spacetime #########################
+        #"../../spacetime/SpaceServer.h" "../../spacetime/TimeServer.h"
+        CYTHON_ADD_MODULE_PYX(spacetime
+            "${ATOMSPACE_INCLUDE_DIR}/opencog/cython/opencog/atomspace.pxd"
+        )
+        list(APPEND ADDITIONAL_MAKE_CLEAN_FILES "spacetime.cpp")
+        ADD_LIBRARY(spacetime_cython SHARED
+            spacetime.cpp
+        )
 
-	
+        TARGET_LINK_LIBRARIES(spacetime_cython
+            SpaceMap
+            spacetime
+            ${ATOMSPACE_LIBRARIES}
+            ${COGUTIL_LIBRARY}
+            ${PYTHON_LIBRARIES}
+        )
+
+        SET_TARGET_PROPERTIES(spacetime_cython PROPERTIES
+            PREFIX ""
+            OUTPUT_NAME spacetime)
+
+        INSTALL (TARGETS spacetime_cython
+            DESTINATION "${DATADIR}/python/opencog")
+
+        ############################ spatial #########################
+        CYTHON_ADD_MODULE_PYX(spatial
+            "${ATOMSPACE_INCLUDE_DIR}/opencog/cython/opencog/atomspace.pxd"
+            "../../spacetime/SpaceServer.h" "../../spacetime/TimeServer.h"
+        )
+        list(APPEND ADDITIONAL_MAKE_CLEAN_FILES "spatial.cpp")
+        ADD_LIBRARY(spatial_cython SHARED
+            spatial.cpp
+        )
+
+        TARGET_LINK_LIBRARIES(spatial_cython
+            SpaceMap
+            SpaceMapUtil
+            spacetime
+            ${ATOMSPACE_LIBRARIES}
+            ${COGUTIL_LIBRARY}
+            ${PYTHON_LIBRARIES}
+        )
+
+        SET_TARGET_PROPERTIES(spatial_cython PROPERTIES
+            PREFIX ""
+            OUTPUT_NAME spatial)
+
+        INSTALL (TARGETS spatial_cython
+            DESTINATION "${DATADIR}/python/opencog")
+    ENDIF (HAVE_OCTOMAP)
+ENDIF (HAVE_ATOMSPACE)
 
 
 IF (HAVE_SERVER)
@@ -140,40 +189,6 @@ IF (HAVE_SERVER)
 	INSTALL (TARGETS agent_finder
 		DESTINATION "${DATADIR}/python/opencog")
 ENDIF(HAVE_SERVER)
-
-IF (HAVE_MOSES)
-	CYTHON_ADD_MODULE_PYX(pymoses
-		# "<moses/moses/main/moses_exec.h>"
-	)
-
-	# opencog.pymoses Python bindings
-	ADD_LIBRARY(moses_cython SHARED
-		pymoses.cpp
-	)
-
-	TARGET_LINK_LIBRARIES(moses_cython
-		${MOSES_LIBRARIES}
-		${COGUTIL_LIBRARY}
-		${PYTHON_LIBRARIES}
-		${Boost_PROGRAM_OPTIONS_LIBRARY}
-		${Boost_THREAD_LIBRARY}
-	)
-
-	IF (HAVE_MPI)
-		TARGET_LINK_LIBRARIES (moses_cython
-			# These two work for both MPICH2 and OpenMPI, for me.
-			${MPI_LIBRARY}
-			${MPI_EXTRA_LIBRARY}
-		)
-	ENDIF (HAVE_MPI)
-
-	SET_TARGET_PROPERTIES(moses_cython PROPERTIES
-		PREFIX ""
-		OUTPUT_NAME pymoses)
-
-	INSTALL (TARGETS moses_cython
-		DESTINATION "${DATADIR}/python/opencog")
-ENDIF (HAVE_MOSES)
 
 IF (HAVE_STATISTICS)
 	CYTHON_ADD_MODULE_PYX(statistics

@@ -20,6 +20,7 @@
 ; -- map-word-node        Call proc on the word-node associated to word-inst.
 ; -- document-get-sentences Get senteces in document.
 ; -- sentence-get-parses    Get parses of a sentence.
+; -- sentence-get-utterance-type  Get the speech act of a sentence.
 ; -- sent-list-get-parses   Get parses of a list of sentences.
 ; -- parse-get-words        Get all words occuring in a parse.
 ; -- parse-get-words-in-order  Get all words occuring in a parse in order.
@@ -68,10 +69,10 @@
 ; Copyright (c) 2015 OpenCog Foundation
 ;
 
-(use-modules (ice-9 receive))
+(use-modules (ice-9 receive) (srfi srfi-1))
 
 ; ---------------------------------------------------------------------
-(define (map-parses proc sent-or-list)
+(define-public (map-parses proc sent-or-list)
 "
   map-parses   Call proceedure on every parse of the sentence.
 
@@ -94,13 +95,13 @@
 
 ; Same as above, but multi-threaded -- each parse dispatched to its own
 ; thread, on a distinct CPU.
-(define (parallel-map-parses proc sent-or-list)
+(define-public (parallel-map-parses proc sent-or-list)
 	(cog-par-chase-links-chk 'ParseLink 'ParseNode
 		proc sent-or-list 'SentenceNode)
 )
 
 ; ---------------------------------------------------------------------
-(define (map-word-instances proc parse-or-list)
+(define-public (map-word-instances proc parse-or-list)
 "
   map-word-instances   Call proc on each word-instance of parse.
 
@@ -117,7 +118,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (map-word-node proc word-inst)
+(define-public (map-word-node proc word-inst)
 "
   map-word-node        Call proc on the word-node associated to word-inst.
 
@@ -133,7 +134,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (document-get-sentences doco)
+(define-public (document-get-sentences doco)
 "
   document-get-sentences Get senteces in document.
 
@@ -150,7 +151,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (sentence-get-parses sent-node)
+(define-public (sentence-get-parses sent-node)
 "
   sentence-get-parses    Get parses of a sentence.
 
@@ -164,7 +165,7 @@
 )
 
 ; -----------------------------------------------------------------------
-(define (sent-list-get-parses sent-list)
+(define-public (sent-list-get-parses sent-list)
 "
   sent-list-get-parses   Get parses of a list of sentences.
 
@@ -175,9 +176,39 @@
 	(concatenate! (map sentence-get-parses sent-list))
 )
 
+;------------------------------------------------------------------
+(define-public (sentence-get-utterance-type sent)
+"
+  sentence-get-utterance-type SENT -- Check the utterance speech act type
+
+  Expect SENT to be (SentenceNode \"sentence@45c470a6-29...\")
+  Will return (DefinedLinguisticConceptNode ACT) where ACT is
+  one of DeclarativeSpeechAct, InterrogativeSpeechAct,
+  TruthQuerySpeechAct, etc...
+"
+	; XXX TODO (1) this could be converted into a simple GetLink
+	; and probably should be. (2) There should be a syntax for GetLink
+	; that is lest verbose, and closer in style to what is written
+	; below. Viz, it should be posible to write GetLink's as a sequence
+	; of chases.
+
+	; parse will be (ParseNode "sentence@a6_parse_0")
+	(define parse (car (cog-chase-link 'ParseLink 'ParseNode sent)))
+
+	; interp will be (InterpretationNode "sentence@a610_interpretation_$X")
+	(define interp (car
+		(cog-chase-link 'InterpretationLink 'InterpretationNode parse)))
+
+	; act-type will be (DefinedLinguisticConceptNode "DeclarativeSpeechAct")
+	(define act-type (cog-chase-link
+		'InheritanceLink 'DefinedLinguisticConceptNode interp))
+
+	; Return act-type
+	act-type
+)
 
 ; ---------------------------------------------------------------------
-(define (parse-get-words parse-node)
+(define-public (parse-get-words parse-node)
 "
   parse-get-words - Given a parse, return a list of all words in the parse
 
@@ -188,7 +219,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (parse-get-words-in-order parse-node)
+(define-public (parse-get-words-in-order parse-node)
 "
   parse-get-words-in-order - Given a parse, return a list of all words in the parse in order
 
@@ -204,7 +235,7 @@
 )
 
 ; --------------------------------------------------------------------
-(define (parse-get-relations parse-node)
+(define-public (parse-get-relations parse-node)
 "
   parse-get-relations    Get all RelEx relations in a parse.
 
@@ -224,15 +255,15 @@
 )
 
 ; --------------------------------------------------------------------
-(define (parse-get-relex-outputs parse-node)
+(define-public (parse-get-relex-outputs parse-node)
 "
   parse-get-relex-outputs  Get all RelEx outputs in a parse.
 
-  Given a parse, returns a list of RelEx outputs associated with the ParseNode.
+  Given a parse, returns a list of RelEx outputs associated with
+  the ParseNode.
 "
     (let* ((sent-node (car (cog-chase-link 'ParseLink 'SentenceNode parse-node)))
-           (anchor (car (cog-get-link 'ListLink 'AnchorNode sent-node)))
-           (sent-incoming-set (remove (lambda (x) (equal? anchor x)) (cog-incoming-set sent-node)))
+           (sent-incoming-set (cog-incoming-set sent-node))
            (word-inst-nodes (parse-get-words parse-node))
            (relex-relations (concatenate (map word-inst-get-relations word-inst-nodes)))
            (word-incoming-set (concatenate (map cog-incoming-set word-inst-nodes)))
@@ -253,7 +284,7 @@
 )
 
 ; --------------------------------------------------------------------
-(define (parse-get-r2l-outputs parse-node)
+(define-public (parse-get-r2l-outputs parse-node)
 "
   parse-get-r2l-outputs    Get all R2L outputs in a parse.
 
@@ -269,7 +300,7 @@
 )
 
 ; --------------------------------------------------------------------
-(define (interp-get-r2l-outputs interp-node)
+(define-public (interp-get-r2l-outputs interp-node)
 "
   interp-get-r2l-outputs    Get all R2L outputs in an Interpretation.
 
@@ -280,7 +311,7 @@
 )
 
 ; --------------------------------------------------------------------
-(define (interp-get-parse interp)
+(define-public (interp-get-parse interp)
 "
   interp-get-parse    Get the Interpretation of a Parse.
 
@@ -290,7 +321,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-get-parse word-inst)
+(define-public (word-inst-get-parse word-inst)
 "
   word-inst-get-parse   Return the ParseNode associated with word-inst
 
@@ -300,7 +331,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-get-number word-inst)
+(define-public (word-inst-get-number word-inst)
 "
   word-inst-get-number   Return the NumberNode associated with word-inst
 
@@ -310,7 +341,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-get-word word-inst)
+(define-public (word-inst-get-word word-inst)
 "
   word-inst-get-word   Return the WordNode associated with word-inst
 
@@ -320,7 +351,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-get-word-str word-inst)
+(define-public (word-inst-get-word-str word-inst)
 "
   word-inst-get-word-str  Return the word string assoc with word-inst
 
@@ -330,7 +361,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-get-lemma word-inst)
+(define-public (word-inst-get-lemma word-inst)
 "
   word-inst-get-lemma  Return the lemma of word instance.
 
@@ -352,7 +383,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-get-attr word-inst)
+(define-public (word-inst-get-attr word-inst)
 "
   word-inst-get-attr   Return attributes of word instance
 
@@ -364,7 +395,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-get-pos word-inst)
+(define-public (word-inst-get-pos word-inst)
 "
   word-inst-get-pos    Return part-of-speech (POS) of word instance
 
@@ -376,7 +407,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-match-pos? word-inst pos)
+(define-public (word-inst-match-pos? word-inst pos)
 "
   word-inst-match-pos? Does word-inst have POS?
 
@@ -398,7 +429,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-is-noun? word-inst)
+(define-public (word-inst-is-noun? word-inst)
 "
   word-inst-is-noun?   Is word instance a noun?
 
@@ -408,7 +439,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-is-verb? word-inst)
+(define-public (word-inst-is-verb? word-inst)
 "
   word-inst-is-verb?   Is word instance a verb?
 
@@ -418,7 +449,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-get-relations word-inst)
+(define-public (word-inst-get-relations word-inst)
 "
   word-inst-get-relations       Get RelEx relations involving word-inst
 
@@ -433,7 +464,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-get-prep-relations word-inst)
+(define-public (word-inst-get-prep-relations word-inst)
 "
   word-inst-get-prep-relations  Get prepositional relations for word-inst
 "
@@ -441,7 +472,7 @@
 )
 
 ; --------------------------------------------------------------------
-(define (word-inst-get-head-relations word-inst)
+(define-public (word-inst-get-head-relations word-inst)
 "
   word-inst-get-head-relations  Get relations with word-inst as head
 
@@ -466,7 +497,7 @@
 )
 
 ; --------------------------------------------------------------------
-(define (word-inst-filter-relex-rels word-inst rel-name-list)
+(define-public (word-inst-filter-relex-rels word-inst rel-name-list)
 "
   word-inst-filter-relex-rels   Get filtered set of RelEx relations
 
@@ -500,7 +531,7 @@
 )
 
 ; --------------------------------------------------------------------
-(define (verb-inst-get-relex-rels word-inst)
+(define-public (verb-inst-get-relex-rels word-inst)
 "
   verb-inst-get-relex-rels      Get relations for a verb.
 
@@ -518,7 +549,7 @@
 )
 
 ; --------------------------------------------------------------------
-(define (noun-inst-get-relex-modifiers word-inst)
+(define-public (noun-inst-get-relex-modifiers word-inst)
 "
   noun-inst-get-relex-modifiers Get relations for a noun.
 
@@ -539,7 +570,7 @@
 )
 
 ; --------------------------------------------------------------------
-(define (noun-inst-get-prep-rels word-inst)
+(define-public (noun-inst-get-prep-rels word-inst)
 "
   noun-inst-get-prep-rels       Get prep relations for noun.
 
@@ -568,7 +599,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-get-subscript-str word-inst)
+(define-public (word-inst-get-subscript-str word-inst)
 "
   word-inst-get-subscript-str   Get link-grammar subscript for word-inst
 
@@ -593,7 +624,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-get-subscripted-word-str word-inst)
+(define-public (word-inst-get-subscripted-word-str word-inst)
 "
   word-inst-get-subscripted-word-str Get LG subscripted word string.
 
@@ -609,7 +640,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-get-senses word-inst)
+(define-public (word-inst-get-senses word-inst)
 "
   word-inst-get-senses   Get word senses associated with word.
 
@@ -620,7 +651,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-sense-score word-inst word-sense)
+(define-public (word-inst-sense-score word-inst word-sense)
 "
   word-inst-sense-score  Get ranking score for word-inst & word-sense.
 
@@ -644,7 +675,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (word-inst-get-disjunct word-inst)
+(define-public (word-inst-get-disjunct word-inst)
 "
   word-inst-get-disjunct -- Get the disjunct (LgAnd) used for a word-inst.
 "
@@ -652,7 +683,7 @@
 )
 
 ; --------------------------------------------------------------------
-(define (relation-get-dependent rel)
+(define-public (relation-get-dependent rel)
 "
   relation-get-dependent Get dependent part of a relation.
 
@@ -672,7 +703,7 @@
 )
 
 ; --------------------------------------------------------------------
-(define (delete-sentence sent)
+(define-public (delete-sentence sent)
 "
   delete-sentence -- delete all atoms associated with a sentence.
 
@@ -769,7 +800,7 @@
 )
 
 ; ---------------------------------------------------------------------
-(define (delete-sentences)
+(define-public (delete-sentences)
 "
   delete-sentences       Delete all atoms that occur in sentences
 

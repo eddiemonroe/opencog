@@ -4,8 +4,8 @@
 ; Assorted functions for post-processing relex2logic output.
 ;
 
-(use-modules (ice-9 receive))
-(load "utilities.scm")
+(use-modules (ice-9 receive) (srfi srfi-1))
+(load "r2l-utilities.scm")
 
 ; =======================================================================
 ; Helper utilities for post-processing.
@@ -14,12 +14,14 @@
 ; -----------------------------------------------------------------------
 ; word-get-r2l-node -- Retrieve corresponding R2L created node
 ;
-; Given a WordInstanceNode/WordNode created by RelEx, retrieve the corresponding
-; ConceptNode or PredicateNode or NumberNode or DefinedLinguisticPredicateNode created by R2L helper
+; Given a WordInstanceNode/WordNode created by RelEx, retrieve the
+; corresponding ConceptNode or PredicateNode or NumberNode or
+; DefinedLinguisticPredicateNode created by R2L helper.
 ;
-; XXX FIXME this method is really bad because for each new type of node R2L
-; uses, it need to be added here.  It needs some different way for linking
-; R2L nodes to WordInstanceNodes other than node name!
+; XXX FIXME this method is really bad because for each new type of
+; node that R2L uses, it needs to be added here.  There needs some
+; different way for linking R2L nodes to WordInstanceNodes other
+; than node name! e.g. maybe an R2LLink ?
 ;
 (define (word-get-r2l-node node)
 	(define name
@@ -104,9 +106,9 @@
 ; Check if a word-inst ConceptNode has definite-rule applied.
 ;
 (define (definite? word-concept-inst)
-	(define definite (cog-node 'DefinedLinguisticPredicateNode "definite"))
+	(define definite (DefinedLinguisticPredicateNode "definite"))
 	(define llink (cog-link 'ListLink word-concept-inst))
-	(and (not (null? definite))
+	(and
 		(not (null? llink))
 		(not (null? (cog-link 'EvaluationLink definite llink))))
 )
@@ -116,7 +118,7 @@
 ;
 ; Returns a random hex string of length 'str-length'.
 ;
-(define (random-hex-string str-length) 
+(define (random-hex-string str-length)
 	(define alphanumeric "abcdef0123456789")
 	(define str "")
 	(while (> str-length 0)
@@ -130,6 +132,8 @@
 ; random-UUID -- Generate a new UUID version 4
 ;
 ; Returns UUID version 4 (ie, mostly just random hex with some fixed values)
+; XXX FIXME should be changed to just use sha-256 -- that would make it
+; faster, better.
 ;
 (define (random-UUID)
 	(define part1 (random-hex-string 8))
@@ -404,13 +408,16 @@
 ; R2L's structure redesign, and a clearer idea of what it is trying to
 ; achieve.
 ;
+; XXX I cannot find any callers of this function. Is this dead code ???
+; If so, it should be removed .. its confusing ...
+;
 (define (create-abstract-version interpretation-node)
 	(define r2l-set (cog-outgoing-set (car (cog-chase-link 'ReferenceLink 'SetLink interpretation-node))))
 	
 	; remove all unary links
 	(define r2l-cleaned-set (remove r2l-is-unary? r2l-set))
 	
-	; for each link, retrive its nodes
+	; for each link, retrieve its nodes
 	(define r2l-set-nodes (append-map (lambda (lnk) (delete-duplicates (cog-get-all-nodes lnk))) r2l-cleaned-set))
 
 	; partition the set of nodes: one set all lone nodes and the other the rest
@@ -436,4 +443,3 @@
 		)
 	)
 )
-

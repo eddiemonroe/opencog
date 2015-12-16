@@ -1,5 +1,7 @@
+(use-modules (opencog))
+
 (InheritanceLink (stv 1 1) (ConceptNode "R2L-en-RuleBase") (ConceptNode "RuleBase"))
-(define r2l-rules (ConceptNode "R2L-en-RuleBase"))
+(define-public r2l-rules (ConceptNode "R2L-en-RuleBase"))
 (ExecutionLink (SchemaNode "URE:maximum-iterations") (ConceptNode "R2L-en-RuleBase") (NumberNode "100") )
 (define advmod-name (Node "advmod"))
 (DefineLink advmod-name advmod)
@@ -163,18 +165,23 @@
 (define why-q-name (Node "why-q"))
 (DefineLink why-q-name why-q)
 (MemberLink (stv 1 1) why-q-name (ConceptNode "R2L-en-RuleBase"))
+
 (define declarative-name (Node "declarative"))
 (DefineLink declarative-name declarative)
 (MemberLink (stv 1 1) declarative-name (ConceptNode "R2L-en-RuleBase"))
+
 (define truthquery-name (Node "truthquery"))
 (DefineLink truthquery-name truthquery)
 (MemberLink (stv 1 1) truthquery-name (ConceptNode "R2L-en-RuleBase"))
+
 (define interrogative-name (Node "interrogative"))
 (DefineLink interrogative-name interrogative)
 (MemberLink (stv 1 1) interrogative-name (ConceptNode "R2L-en-RuleBase"))
+
 (define imperative-name (Node "imperative"))
 (DefineLink imperative-name imperative)
 (MemberLink (stv 1 1) imperative-name (ConceptNode "R2L-en-RuleBase"))
+
 (define det-name (Node "det"))
 (DefineLink det-name det)
 (MemberLink (stv 1 1) det-name (ConceptNode "R2L-en-RuleBase"))
@@ -184,4 +191,12 @@
 (define gender-name (Node "gender"))
 (DefineLink gender-name gender)
 (MemberLink (stv 1 1) gender-name (ConceptNode "R2L-en-RuleBase"))
-
+(define conj-name (Node "conj"))
+(DefineLink conj-name conj)
+(MemberLink (stv 1 1) conj-name (ConceptNode "R2L-en-RuleBase"))
+(define tense-name (Node "tense"))
+(DefineLink tense-name tense)
+(MemberLink (stv 1 1) tense-name (ConceptNode "R2L-en-RuleBase"))
+(define passive-name (Node "passive"))
+(DefineLink passive-name passive)
+(MemberLink (stv 1 1) passive-name (ConceptNode "R2L-en-RuleBase"))

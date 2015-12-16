@@ -1,4 +1,9 @@
 INSTALL (FILES
+	nlp.scm
+   DESTINATION "${DATADIR}/scm/opencog"
+)
+
+INSTALL (FILES
 	config.scm
 	disjunct-list.scm
 	file-utils.scm
@@ -6,5 +11,5 @@ INSTALL (FILES
 	parse-rank.scm
 	processing-utils.scm
 	type-definitions.scm
-   DESTINATION "${DATADIR}/scm/nlp/scm"
+   DESTINATION "${DATADIR}/scm/opencog/nlp"
 )

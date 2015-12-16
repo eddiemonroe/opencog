@@ -113,14 +113,23 @@ bool SuRealPMCB::clause_match(const Handle &pattrn_link_h, const Handle &grnd_li
     // keep only SetLink, and check if any of the SetLink has an InterpretationNode as neightbor
     qISet.erase(std::remove_if(qISet.begin(), qISet.end(), [](Handle& h) { return h->getType() != SET_LINK; }), qISet.end());
 
-    // helper lambda function to check for linkage to an InterpretationNode, given SetLink
-    auto hasInterpretation = [this](Handle& h)
+    // store the InterpretationNodes, will be needed if this grounding is accepted
+    HandleSeq qTempInterpNodes;
+
+    // helper lambda function to check for linkage to an InterpretationNode,
+    // and see if it's one of the targets we are looking for, given SetLink
+    auto hasInterpretation = [&](Handle& h)
     {
         HandleSeq qN = get_neighbors(h, true, false, REFERENCE_LINK, false);
-        return std::any_of(qN.begin(), qN.end(), [](Handle& hn) { return hn->getType() == INTERPRETATION_NODE; });
+        return std::any_of(qN.begin(), qN.end(), [&](Handle& hn) {
+                bool isInterpNode = hn->getType() == INTERPRETATION_NODE;
+                bool isTarget = m_targets.size() > 0? (m_targets.find(hn) != m_targets.end()) : true;
+                if (isInterpNode) qTempInterpNodes.push_back(hn);
+                return isInterpNode and isTarget; });
     };
 
-    // reject match (ie. return false) if there is no InterpretationNode
+    // reject match (ie. return false) if there is no InterpretationNode, or
+    // the InterpretationNode is not one of the targets
     if (not std::any_of(qISet.begin(), qISet.end(), hasInterpretation))
         return false;
 
@@ -347,6 +356,10 @@ bool SuRealPMCB::clause_match(const Handle &pattrn_link_h, const Handle &grnd_li
             return false;
     }
 
+    // store the accepted InterpretationNodes, which will be the targets for the
+    // next disconnected clause in the pattern, if any
+    m_interp.insert(qTempInterpNodes.begin(), qTempInterpNodes.end());
+
     return true;
 }
 
@@ -459,9 +472,20 @@ bool SuRealPMCB::grounding(const std::map<Handle, Handle> &var_soln, const std::
                 qLeftover.erase(itc);
         }
 
+        // for words in a sentence, they should be linked to their
+        // corresponding WordInstanceNodes by a ReferenceLink, for example:
+        //   ReferenceLink
+        //     ConceptNode "water@123"
+        //     WordInstanceNode "water@123"
+        auto checker = [] (Handle& h)
+        {
+            HandleSeq qN = get_neighbors(h, false, true, REFERENCE_LINK, false);
+            return qN.size() != 1 or qN[0]->getType() != WORD_INSTANCE_NODE;
+        };
+
         HandleSeq qWordInstNodes = get_all_nodes(hSetLink);
         qWordInstNodes.erase(std::remove_if(qWordInstNodes.begin(), qWordInstNodes.end(),
-                                            [](Handle& h) { return h->getType() != WORD_INSTANCE_NODE; }), qWordInstNodes.end());
+                                            checker), qWordInstNodes.end());
 
         // check if all of the leftovers of this SetLink are unary -- doesn't
         // form a logical relationship with more than one word of the sentence
@@ -477,7 +501,7 @@ bool SuRealPMCB::grounding(const std::map<Handle, Handle> &var_soln, const std::
                     std::string wordInstName = NodeCast(w)->getName();
                     std::string nodeName = NodeCast(n)->getName();
 
-                    if (wordInstName.compare(0, nodeName.length()+1, nodeName+'@') == 0)
+                    if (wordInstName.compare(nodeName) == 0)
                     {
                         sWordFound.insert(w.value());
                         return true;
@@ -492,32 +516,45 @@ bool SuRealPMCB::grounding(const std::map<Handle, Handle> &var_soln, const std::
             // if it is not a unary link, the solution is not good enough
             if (sWordFound.size() > 1)
             {
-                isGoodEnough = false;
-                break;
+                size_t cnt = sWordFound.size();
+
+                // see how many of the words found in the leftover-link have
+                // actually been grounded
+                for (auto i = var_soln.begin(); i != var_soln.end(); i++)
+                    if (std::find(sWordFound.begin(), sWordFound.end(), i->second.value()) != sWordFound.end())
+                        cnt--;
+
+                // so it would not be considered as good enough if there are
+                // at least one ungrounded word in a leftover-link containing
+                // two or more words
+                if (cnt > 0)
+                {
+                    isGoodEnough = false;
+                    break;
+                }
             }
         }
 
+        // if we find a good enough solution, clear previous (not good enough) ones, if any
         if (isGoodEnough)
+            m_results.clear();
+
+        // store the solution; all common InterpretationNode are solutions for this
+        // grounding, so store the solution for each InterpretationNode
+        // but normally there should be only one InterpretationNode for a
+        // given R2L-SetLink
+        for (auto n : qItprNode)
         {
-            qItprNode = get_neighbors(hSetLink, true, false, REFERENCE_LINK, false);
+            // there could also be multiple solutions for one InterpretationNode,
+            // so store them in a vector
+            if (m_results.count(n) == 0)
+                m_results[n] = std::vector<std::map<Handle, Handle> >();
 
-            // store the solution; all common InterpretationNode are solutions for this
-            // grounding, so store the solution for each InterpretationNode
-            // but normally there should be only one InterpretationNode for a
-            // given R2L-SetLink
-            for (auto n : qItprNode)
-            {
-                // there could also be multiple solutions for one InterpretationNode,
-                // so store them in a vector
-                if (m_results.count(n) == 0)
-                    m_results[n] = std::vector<std::map<Handle, Handle> >();
-
-                logger().debug("[SuReal] grounding Interpreation: %s", n->toShortString().c_str());
-                m_results[n].push_back(shrinked_soln);
-            }
-
-            return true;
+            logger().debug("[SuReal] grounding Interpreation: %s", n->toShortString().c_str());
+            m_results[n].push_back(shrinked_soln);
         }
+
+        return isGoodEnough;
     }
 
     return false;
@@ -537,6 +574,13 @@ bool SuRealPMCB::grounding(const std::map<Handle, Handle> &var_soln, const std::
  */
 bool SuRealPMCB::initiate_search(PatternMatchEngine* pPME)
 {
+    // set targets, m_targets should always be a subset of m_interp
+    if (m_interp.size() > 0)
+    {
+        m_targets = m_interp;
+        m_interp.clear();
+    }
+
     _search_fail = false;
     if (not _variables->varset.empty())
     {
@@ -560,18 +604,22 @@ bool SuRealPMCB::initiate_search(PatternMatchEngine* pPME)
 
     for (auto& c : qCandidate)
     {
-        auto rm = [](Handle& h)
+        auto rm = [&](Handle& h)
         {
             if (h->getType() != SET_LINK) return true;
 
             HandleSeq qN = get_neighbors(h, true, false, REFERENCE_LINK, false);
             return not std::any_of(qN.begin(), qN.end(),
-                [](Handle& hn) { return hn->getType() == INTERPRETATION_NODE; });
+                [&](Handle& hn) {
+                    bool isInterpNode = hn->getType() == INTERPRETATION_NODE;
+                    bool isTarget = m_targets.size() > 0? (m_targets.find(hn) != m_targets.end()) : true;
+                    return isInterpNode and isTarget;
+                });
         };
 
         HandleSeq qISet = m_as->get_incoming(c);
 
-        // erase atoms that are neither R2L-Setlink nor SetLink
+        // erase atoms that are neither a SetLink nor a target
         qISet.erase(std::remove_if(qISet.begin(), qISet.end(), rm), qISet.end());
 
         if (qISet.size() >= 1)

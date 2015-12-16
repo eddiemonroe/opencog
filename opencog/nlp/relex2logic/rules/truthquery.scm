@@ -1,46 +1,51 @@
+;
+; A truth-query detector, based on LG link types.
+;
 (define truthquery
     (BindLink
         (VariableList
             (TypedVariableLink
-                (VariableNode "$word-inst-node")
-                (TypeNode "WordInstanceNode")
+                (VariableNode "$interp")
+                (TypeNode "InterpretationNode")
             )
             (TypedVariableLink
-                (VariableNode "$parse-node")
+                (VariableNode "$parse")
                 (TypeNode "ParseNode")
             )
             (TypedVariableLink
-                (VariableNode "$interp-node")
-                (TypeNode "InterpretationNode")
+                (VariableNode "$wall-inst")
+                (TypeNode "WordInstanceNode")
+            )
+            (TypedVariableLink
+                (VariableNode "$word-inst")
+                (TypeNode "WordInstanceNode")
             )
         )
         (AndLink
-            (WordInstanceLink
-                (VariableNode "$word-inst-node")
-                (VariableNode "$parse-node")
-            )
-            (InheritanceLink
-                (VariableNode "$word-inst-node")
-                (DefinedLinguisticConceptNode "truth-query")
-            )
             (InterpretationLink
-                (VariableNode "$interp-node")
-                (VariableNode "$parse-node")
+                (VariableNode "$interp")
+                (VariableNode "$parse")
             )
-        )
-        (ListLink
-            (ExecutionOutputLink
-                (GroundedSchemaNode "scm: pre-tq-rule")
-                (ListLink
-                    (VariableNode "$interp-node")
-                )
+            (WordInstanceLink
+                (VariableNode "$wall-inst")
+                (VariableNode "$parse")
             )
-        )
-    )
-)
 
-(define (pre-tq-rule int-index)
-    (ListLink
-        (truth-query-rule int-index)
+            (ReferenceLink
+                (VariableNode "$wall-inst")
+                (WordNode "###LEFT-WALL###")
+            )
+
+            ;; If left wall is linked with Qd,
+            ;; then it is a truth-query.
+            (EvaluationLink (LinkGrammarRelationshipNode "Qd")
+                (ListLink
+                    (VariableNode "$wall-inst")
+                    (VariableNode "$word-inst")))
+        )
+        ; Mark this as a truth-query.
+        (InheritanceLink
+            (VariableNode "$interp")
+            (DefinedLinguisticConceptNode "TruthQuerySpeechAct"))
     )
 )

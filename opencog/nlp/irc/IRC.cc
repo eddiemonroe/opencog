@@ -34,6 +34,7 @@
 #include <netdb.h>
 #include <sys/types.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <time.h>
 
@@ -59,7 +60,7 @@ IRC::~IRC()
 		delete_irc_command_hook(hooks);
 }
 
-void IRC::insert_irc_command_hook(irc_command_hook* hook, const char* cmd_name, 
+void IRC::insert_irc_command_hook(irc_command_hook* hook, const char* cmd_name,
          int (*function_ptr)(const char*, irc_reply_data*, void*))
 {
 	if (hook->function)
@@ -106,7 +107,7 @@ void IRC::delete_irc_command_hook(irc_command_hook* cmd_hook)
 	delete cmd_hook;
 }
 
-int IRC::start(const char* server, int port, const char* nick, 
+int IRC::start(const char* server, int port, const char* nick,
                const char* user, const char* name, const char* pass)
 {
 	#ifdef WIN32_NOT_UNIX
@@ -115,6 +116,9 @@ int IRC::start(const char* server, int port, const char* nick,
 	hostent* resolv;
 	#endif
 	sockaddr_in rem;
+	int optval;
+	socklen_t optlen = sizeof(optval);
+	int rc;
 
 	if (connected)
 		return 1;
@@ -124,9 +128,54 @@ int IRC::start(const char* server, int port, const char* nick,
 	{
 		return 1;
 	}
+
+	/* Turn on keepalive. */
+	optval = 1;
+	rc=setsockopt(irc_socket, SOL_SOCKET, SO_KEEPALIVE, &optval, optlen);
+	if (0 > rc)
+	{
+		perror("setsockopt()");
+		close(irc_socket);
+		return 1;
+	}
+	printf("SO_KEEPALIVE turned ON\n");
+
+	/* Verify that it worked. */
+	rc=getsockopt(irc_socket, SOL_SOCKET, SO_KEEPALIVE, &optval, &optlen);
+	if (0 > rc)
+	{
+		perror("getsockopt()");
+		close(irc_socket);
+		return 1;
+	}
+	printf("SO_KEEPALIVE is %s\n", (optval ? "ON" : "OFF"));
+
+	/* Ping every .. I dunno -- 5 minutes? */
+	optval = 300;
+	rc=setsockopt(irc_socket, IPPROTO_TCP, TCP_KEEPIDLE, &optval, optlen);
+	if (0 > rc)
+	{
+		perror("setsockopt()");
+		close(irc_socket);
+		return 1;
+	}
+	printf("tcp_keepalive_time set to %d seconds\n", optval);
+
+	/* Ping every 10 seconds (for 9 tries == 90 seconds total) */
+	optval = 10;
+	rc=setsockopt(irc_socket, IPPROTO_TCP, TCP_KEEPINTVL, &optval, optlen);
+	if (0 > rc)
+	{
+		perror("setsockopt()");
+		close(irc_socket);
+		return 1;
+	}
+	printf("tcp_keepalive_intvl set to %d seconds\n", optval);
+
 	resolv=gethostbyname(server);
 	if (!resolv)
 	{
+		perror("gethostbyname()");
 		closesocket(irc_socket);
 		return 1;
 	}
@@ -211,6 +260,7 @@ int IRC::message_loop()
 		ret_len=recv(irc_socket, buffer, 1023, 0);
 		if (ret_len==SOCKET_ERROR || !ret_len)
 		{
+			perror("Exit main loop");
 			return 1;
 		}
 		buffer[ret_len]='\0';

@@ -1,46 +1,78 @@
+;
+; A more accurate interrogative detector, based on LG link types.
+;
 (define interrogative
     (BindLink
         (VariableList
             (TypedVariableLink
-                (VariableNode "$word-inst-node")
-                (TypeNode "WordInstanceNode")
+                (VariableNode "$interp")
+                (TypeNode "InterpretationNode")
             )
             (TypedVariableLink
-                (VariableNode "$parse-node")
+                (VariableNode "$parse")
                 (TypeNode "ParseNode")
             )
             (TypedVariableLink
-                (VariableNode "$interp-node")
-                (TypeNode "InterpretationNode")
+                (VariableNode "$wall-inst")
+                (TypeNode "WordInstanceNode")
+            )
+            (TypedVariableLink
+                (VariableNode "$wh-word-inst")
+                (TypeNode "WordInstanceNode")
             )
         )
         (AndLink
-            (WordInstanceLink
-                (VariableNode "$word-inst-node")
-                (VariableNode "$parse-node")
-            )
-            (InheritanceLink
-                (VariableNode "$word-inst-node")
-                (DefinedLinguisticConceptNode "interrogative")
-            )
             (InterpretationLink
-                (VariableNode "$interp-node")
-                (VariableNode "$parse-node")
+                (VariableNode "$interp")
+                (VariableNode "$parse")
             )
-        )
-        (ListLink
-            (ExecutionOutputLink
-                (GroundedSchemaNode "scm: pre-interr-rule")
-                (ListLink
-                    (VariableNode "$interp-node")
-                )
+            (WordInstanceLink
+                (VariableNode "$wall-inst")
+                (VariableNode "$parse")
             )
-        )
-    )
-)
 
-(define (pre-interr-rule int-index)
-    (ListLink
-        (interrogative-rule int-index)
+            (ReferenceLink
+                (VariableNode "$wall-inst")
+                (WordNode "###LEFT-WALL###")
+            )
+
+            ;; If left wall is linked with any of Wq, Ws, Wj or Ww
+            ;; or Qe, Qw then its interrogative.
+            (ChoiceLink
+                (EvaluationLink (LinkGrammarRelationshipNode "Wq")
+                    (ListLink
+                        (VariableNode "$wall-inst")
+                        (VariableNode "$wh-word-inst")))
+
+                (EvaluationLink (LinkGrammarRelationshipNode "Ws")
+                    (ListLink
+                        (VariableNode "$wall-inst")
+                        (VariableNode "$wh-word-inst")))
+
+                (EvaluationLink (LinkGrammarRelationshipNode "Wj")
+                    (ListLink
+                        (VariableNode "$wall-inst")
+                        (VariableNode "$wh-word-inst")))
+
+                (EvaluationLink (LinkGrammarRelationshipNode "Ww")
+                    (ListLink
+                        (VariableNode "$wall-inst")
+                        (VariableNode "$wh-word-inst")))
+
+                (EvaluationLink (LinkGrammarRelationshipNode "Qe")
+                    (ListLink
+                        (VariableNode "$wall-inst")
+                        (VariableNode "$wh-word-inst")))
+
+                (EvaluationLink (LinkGrammarRelationshipNode "Qw")
+                    (ListLink
+                        (VariableNode "$wall-inst")
+                        (VariableNode "$wh-word-inst")))
+            )
+        )
+        ; Mark this as a question.
+        (InheritanceLink
+            (VariableNode "$interp")
+            (DefinedLinguisticConceptNode "InterrogativeSpeechAct"))
     )
 )

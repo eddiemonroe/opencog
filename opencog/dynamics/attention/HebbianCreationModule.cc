@@ -26,7 +26,7 @@
 #include <tbb/task.h>
 
 #include <opencog/atomutils/AtomUtils.h>
-#include <opencog/atomspace/SimpleTruthValue.h>
+#include <opencog/truthvalue/SimpleTruthValue.h>
 #include <opencog/dynamics/attention/atom_types.h>
 #include <opencog/server/CogServer.h>
 #include <opencog/util/algorithm.h>
@@ -87,6 +87,13 @@ void HebbianCreationModule::addAFSignalHandler(const Handle& source,
                                         const AttentionValuePtr& av_old,
                                         const AttentionValuePtr& av_new)
 {
+    //HebbianLinks should not normally enter to the AF boundary since they
+    //should not normally have STI values.The below check will avoid such
+    //Scenarios from happening which could lead to HebbianLink creation
+    //bn atoms containing HebbianLink.
+    if (classserver().isA(source->getType(), HEBBIAN_LINK))
+        return;
+
     // Retrieve the atoms in the AttentionalFocus
     HandleSeq attentionalFocus;
     as->get_handle_set_in_attentional_focus(back_inserter(attentionalFocus));

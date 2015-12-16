@@ -12,6 +12,7 @@ ADD_DEPENDENCIES (sureal
 )
 
 TARGET_LINK_LIBRARIES(sureal
+	lg-dict
 	nlp-types
 	${ATOMSPACE_LIBRARIES}
 )
@@ -19,5 +20,9 @@ TARGET_LINK_LIBRARIES(sureal
 INSTALL (TARGETS sureal DESTINATION "lib${LIB_DIR_SUFFIX}/opencog")
 
 INSTALL (FILES
+	sureal.scm
+	DESTINATION "${DATADIR}/scm/opencog/nlp")
+
+INSTALL (FILES
 	surface-realization.scm
-	DESTINATION "${DATADIR}/scm/nlp/sureal")
+	DESTINATION "${DATADIR}/scm/opencog/nlp/sureal")

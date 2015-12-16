@@ -24,8 +24,8 @@
 
 #include <opencog/atomspace/AtomSpace.h>
 #include <opencog/atomspace/Link.h>
-#include <opencog/atomspace/IndefiniteTruthValue.h>
-#include <opencog/atomspace/SimpleTruthValue.h>
+#include <opencog/truthvalue/IndefiniteTruthValue.h>
+#include <opencog/truthvalue/SimpleTruthValue.h>
 #include <opencog/dynamics/attention/atom_types.h>
 #include <opencog/server/CogServer.h>
 #include <opencog/util/Config.h>
@@ -56,13 +56,6 @@ void HebbianUpdatingAgent::setMean(Handle h, float tc)
 HebbianUpdatingAgent::HebbianUpdatingAgent(CogServer& cs) :
     Agent(cs)
 {
-    static const std::string defaultConfig[] = {
-        "ECAN_CONVERT_LINKS","false",
-        "ECAN_CONVERSION_THRESHOLD","15",
-        "",""
-    };
-    setParameters(defaultConfig);
-
     convertLinks = config().get_bool("ECAN_CONVERT_LINKS");
     conversionThreshold = config().get_int("ECAN_CONVERSION_THRESHOLD");
 

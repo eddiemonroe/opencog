@@ -146,8 +146,8 @@ int got_privmsg(const char* params, irc_reply_data* ird, void* data)
 	// printf ("duude starting with 0x%x %s\n", start[0], start);
 	size_t textlen = strlen(start);
 	size_t len = textlen;
-    //len += strlen ("(say-id-english )");
-    len += strlen ("(process_query)");
+	// len += strlen ("(say-id-english )");
+	len += strlen ("(process-query)");
 	len += strlen (ird->nick);
 	len += 120;
 
@@ -156,8 +156,8 @@ int got_privmsg(const char* params, irc_reply_data* ird, void* data)
 	if (ENGLISH == cmd)
 	{
 		// Get into the opencog scheme shell, and run the command
-        //strcpy (cmdline, "scm hush\n(say-id-english \"");
-        strcpy (cmdline, "scm hush\n(process_query \"");
+		// strcpy (cmdline, "scm hush\n(say-id-english \"");
+		strcpy (cmdline, "scm hush\n(process-query \"");
 		strcat (cmdline, ird->nick);
 		strcat (cmdline, "\" \"");
 		size_t toff = strlen(cmdline);
@@ -195,7 +195,7 @@ int got_privmsg(const char* params, irc_reply_data* ird, void* data)
 	else
 	{
 		conn->privmsg (msg_target, "Shell escapes disabled in this chatbot version\n");
-	        free(cmdline);
+		free(cmdline);
 		return 0;
 	}
 #endif /* ENABLE_SHELL_ESCAPES */
@@ -284,7 +284,8 @@ int got_kick(const char* params, irc_reply_data* ird, void* data)
 {
 	fixup_reply(ird);
 	printf("got kicked -- input=%s\n", params);
-	printf("nick=%s ident=%s host=%s target=%s\n", ird->nick, ird->ident, ird->host, ird->target);
+	printf("nick=%s ident=%s host=%s target=%s\n",
+	       ird->nick, ird->ident, ird->host, ird->target);
 	return 0;
 }
 
