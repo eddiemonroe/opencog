@@ -42,7 +42,7 @@
 ;;;;;;;;;;;;;;;;
 (add-to-load-path "/home/eddie/opencog/opencog/opencog/reasoning/pln/")
 ; Load the rules (use load for relative path w.r.t. to that file)
-(define rule-files (list "rules/deduction.scm"
+(define rule-files (list "rules/deduction-rule.scm"
                          ; "rules/modus-ponens.scm"
                          "rules/member-to-inheritance-rule.scm"))
 ;(define rule-files (list "../opencog/reasoning/pln/rules/deduction.scm"
@@ -54,9 +54,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; List the rules and their weights.
-(define rules (list (list pln-rule-deduction-name 1)
+(define rules (list (list deduction-inheritance-rule-name 1)
                     ; (list pln-rule-modus-ponens-name 1)
-                    (list pln-rule-member-to-inheritance-name 1))
+                    (list member-to-inheritance-rule-name 1))
 )
 
 ; Associate rules to PLN

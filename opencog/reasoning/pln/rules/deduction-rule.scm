@@ -59,8 +59,10 @@
 (define deduction-implication-rule
     (gen-deduction-rule ImplicationLink))
 
-;; Todo: There are 2 copies of this now--one in deduction.scm and one in
-;;       deduction-rule.scm
+(define deduction-intensional-implication-rule
+    (gen-deduction-rule IntensionalImplicationLink))
+
+#!
 (define pln-rule-deduction-intensional-implication
     (BindLink
         (VariableList
@@ -80,9 +82,6 @@
         (ExecutionOutputLink
             (GroundedSchemaNode "scm: deduction-formula")
             (ListLink
-                (VariableNode "$A")
-                (VariableNode "$B")
-                (VariableNode "$C")
                 (IntensionalImplicationLink
                     (VariableNode "$A")
                     (VariableNode "$B"))
@@ -92,13 +91,13 @@
                 (IntensionalImplicationLink
                     (VariableNode "$A")
                     (VariableNode "$C"))))))
-
+!#
 
 ; Name the rule
-(define pln-rule-deduction-intensional-implication-name
-    (Node "pln-rule-deduction-intensional-implication"))
-(DefineLink pln-rule-deduction-intensional-implication-name
-    pln-rule-deduction-intensional-implication)
+(define deduction-intensional-implication-rule-name
+    (Node "deduction-intensional-implication-rule"))
+(DefineLink deduction-intensional-implication-rule-name
+    deduction-intensional-implication-rule)
 
 
 (define deduction-subset-rule
@@ -116,18 +115,18 @@
          (cAB (cog-stv-confidence AB))
          (sBC (cog-stv-strength BC))
          (cBC (cog-stv-confidence BC)))
-       (display "\ndeduction-formula:\n")
-       (display "A = ") (display A) (newline)
-       (display "B = ") (display B) (newline)
-       (display "C = ") (display C) (newline)
-       (display "sA = ") (display sA) (newline)
-       (display "sB = ") (display sB) (newline)
-       (display "sC = ") (display sC) (newline)
-       (display "sAB = ") (display sAB) (newline)
-       (display "sBC = ") (display sBC) (newline)
-       (display "cAB = ") (display cAB) (newline)
-       (display "cBC = ") (display cBC) (newline)
-       (display "strength = ") (display (simple-deduction-strength-formula sA sB sC sAB sBC))(newline)
+       ;(display "\ndeduction-formula:  \n")
+       ;(display "A = ") (gar AB) (newline)
+       ;(display "B = ") (gar BC) (newline)
+       ;(display "C = ") (gdr BC) (newline)
+       ;(display "sA = ") (display sA) (newline)
+       ;(display "sB = ") (display sB) (newline)
+       ;(display "sC = ") (display sC) (newline)
+       ;(display "sAB = ") (display sAB) (newline)
+       ;(display "sBC = ") (display sBC) (newline)
+       ;(display "cAB = ") (display cAB) (newline)
+       ;(display "cBC = ") (display cBC) (newline)
+       ;(display "strength = ") (display (simple-deduction-strength-formula sA sB sC sAB sBC))(newline)
        ;(display ", confidence = ") (display confidence)
 
         (cog-set-tv!
