@@ -87,6 +87,12 @@
 ; Main Formula
 
 (define (simple-deduction-strength-formula sA sB sC sAB sBC)
+    ;(display "simple-decution-strength-formula\n")
+    ;(display sA)(newline)
+    ;(display sB)(newline)
+    ;(display sC)(newline)
+    ;(display sAB)(newline)
+    ;(display sBC)(newline)
   (if
      (and
         (deduction-consistency sA sB sAB)

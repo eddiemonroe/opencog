@@ -62,6 +62,47 @@
 (define deduction-implication-rule
     (gen-deduction-rule ImplicationLink))
 
+(define deduction-intensional-implication-rule
+    (gen-deduction-rule IntensionalImplicationLink))
+
+#!
+(define pln-rule-deduction-intensional-implication
+    (BindLink
+        (VariableList
+            (VariableNode "$A")
+            (VariableNode "$B")
+            (VariableNode "$C"))
+        (AndLink
+            (VariableNode "$A")
+            (VariableNode "$B")
+            (VariableNode "$C")
+            (IntensionalImplicationLink
+                (VariableNode "$A")
+                (VariableNode "$B"))
+            (IntensionalImplicationLink
+                (VariableNode "$B")
+                (VariableNode "$C")))
+        (ExecutionOutputLink
+            (GroundedSchemaNode "scm: deduction-formula")
+            (ListLink
+                (IntensionalImplicationLink
+                    (VariableNode "$A")
+                    (VariableNode "$B"))
+                (IntensionalImplicationLink
+                    (VariableNode "$B")
+                    (VariableNode "$C"))
+                (IntensionalImplicationLink
+                    (VariableNode "$A")
+                    (VariableNode "$C"))))))
+!#
+
+; Name the rule
+(define deduction-intensional-implication-rule-name
+    (Node "deduction-intensional-implication-rule"))
+(DefineLink deduction-intensional-implication-rule-name
+    deduction-intensional-implication-rule)
+
+
 (define deduction-subset-rule
     (gen-deduction-rule SubsetLink))
 
@@ -83,6 +124,21 @@
          ;; deduction consistency constraint (what a pain, let's use
          ;; 0.25 for now).
          (sB (if (and (< 0.99 sB) (<= cB 0)) 0.25 sB)))
+
+       ;(display "\ndeduction-formula:  \n")
+       ;(display "A = ") (gar AB) (newline)
+       ;(display "B = ") (gar BC) (newline)
+       ;(display "C = ") (gdr BC) (newline)
+       ;(display "sA = ") (display sA) (newline)
+       ;(display "sB = ") (display sB) (newline)
+       ;(display "sC = ") (display sC) (newline)
+       ;(display "sAB = ") (display sAB) (newline)
+       ;(display "sBC = ") (display sBC) (newline)
+       ;(display "cAB = ") (display cAB) (newline)
+       ;(display "cBC = ") (display cBC) (newline)
+       ;(display "strength = ") (display (simple-deduction-strength-formula sA sB sC sAB sBC))(newline)
+       ;(display ", confidence = ") (display confidence)
+
         (cog-merge-hi-conf-tv!
             AC
             (if (< 0.99 (* sB cB))
