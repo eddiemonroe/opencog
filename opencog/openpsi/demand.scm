@@ -1,49 +1,15 @@
-; Copyright (C) 2015 OpenCog Foundation
+; Copyright (C) 2015-2016 OpenCog Foundation
 
-(use-modules (ice-9 threads)) ; For `par-map`
 (use-modules (rnrs sorting)) ; For sorting demands by their values.
 
-(use-modules (opencog) (opencog exec) (opencog rule-engine))
+(use-modules (opencog) (opencog exec) (opencog query) (opencog rule-engine))
 
-(load-from-path "openpsi/utilities.scm")
+(load "utilities.scm")
 
 ; --------------------------------------------------------------
 ; Name of variables for common functions in this file-scope
 ; NOTE: Shouldn't be exported to prevent modification.
 (define demand-var (VariableNode "Demand"))
-
-(define demand-type
-    (TypedVariableLink
-        demand-var
-        (TypeNode "ConceptNode"))
-)
-
-; --------------------------------------------------------------
-(define-public (psi-demand-pattern)
-"
-  Returns an alist used to define the psi demand pattern. The key strings are,
-  - 'var': its value is a list containing the VariableNodes and their type
-           restrictions.
-  - 'pat': its value is a DefinedPredicateNode that is associated with the
-           demand pattern.
-"
-    (define z-alist (acons "var" (list demand-type) '()))
-    (define dpn (DefinedPredicateNode
-        (string-append (psi-prefix-str) "demand-pattern")))
-
-    (DefineLink
-        dpn
-        (PresentLink
-            (InheritanceLink
-                demand-var
-                (ConceptNode (string-append (psi-prefix-str) "Demand")))
-            (EvaluationLink
-                (PredicateNode (string-append (psi-prefix-str) "default_value"))
-                (ListLink
-                    demand-var
-                    (VariableNode "default_value")))))
-    (acons "pat" dpn z-alist)
-)
 
 ; --------------------------------------------------------------
 (define-public (psi-get-demands dpn)
@@ -55,42 +21,31 @@
   - DefinedPredicateNode that represents the evaluatable term that will filter
     demands. The evaluatable term should take a single demand-ConceptNode and
     return True-TruthValue `(stv 1 1)`  or False-TruthValue `(stv 0 1)`. The
-    term should have atleast `demand-var` for a VariableNode.
-    (Optionaly the argument could be a TrueLink for returning all the demands
-    defined)
+    term should have atleast one `(VariableNode \"demand\")`.
+    (Optionaly the argument could be a `(TrueLink)` for returning all the
+    demands defined)
 "
 
-    ; NOTE: Should there be weight b/n the different demand-goals? For now a
-    ; a random choice of demands is assumed. In subsequent steps. The
-    ; demand-value could possibly be used for that.
-    (define (get-demand) (cog-execute!
-        ; Filter out the demand-nodes only
-        (MapLink
-            (ImplicationLink
-                (VariableList
-                    (TypedVariable (Variable "$x") (Type "ConceptNode"))
-                    (TypedVariable (Variable "$y") (Type "NumberNode")))
-                (ListLink
-                    (Variable "$x")
-                    (Variable "$y")
-                )
-                (Variable "$x"))
-
-            (GetLink
-                (VariableList (assoc-ref (psi-demand-pattern) "var"))
-                (AndLink
-                    (assoc-ref (psi-demand-pattern) "pat")
-                    dpn)))
-        ))
+    (define (get-demand) (cog-bind
+        (BindLink
+            (AndLink
+                dpn
+                (InheritanceLink
+                    demand-var
+                    (ConceptNode (string-append (psi-prefix-str) "Demand")))
+                (EvaluationLink
+                    (PredicateNode
+                        (string-append (psi-prefix-str) "initial_value"))
+                    (ListLink
+                        demand-var
+                        (VariableNode "value"))))
+                demand-var)))
 
     ; check arguments
     (if (and (not (equal? (cog-type dpn) 'DefinedPredicateNode))
              (not (equal? (cog-type dpn) 'TrueLink)))
         (error "Expected DefinedPredicateNode or TrueLink got: " dpn))
 
-    ; TODO: 1. deal with multiple returns
-    ;       2. check if the demands have been correctly tagged or maybe add
-    ;          psi-register-goal-selector
     (get-demand)
 )
 
@@ -104,79 +59,67 @@
 )
 
 ; --------------------------------------------------------------
-(define-public (psi-demand  demand-name default-value default-action)
+(define-public (psi-demand demand-name initial-value)
 "
   Define an OpenPsi demand, that will have a default behavior defined by the
-  the action passed.
+  the action passed. It returns the demand-node which is a ConceptNode.
 
   demand-name:
   - The name of the demand that is created.
 
-  default-value:
+  initial-value:
   - The initial demand-value. This is the strength of the demand's
     ConceptNode stv. The confidence of the stv is always 1.
 
-  default-action:
-  - The default action that modifies the demand-value.
 "
 
+    ; Check arguments
+    (if (not (string? demand-name))
+        (error (string-append "In procedure psi-demand, expected frist argument "
+            "to be a string got: ") demand-name))
+    (if (or (> 0 initial-value) (< 1 initial-value))
+       (error (string-append "In procedure psi-demand, expected second argument "
+            "the to be within [0, 1] interval, got:") initial-value))
+
     (let* ((demand-str (string-append (psi-prefix-str) demand-name))
-           (demand-node (ConceptNode demand-str (stv default-value 1))))
-        (begin
+           (demand-node (ConceptNode demand-str (stv initial-value 1))))
+
             (InheritanceLink
                 demand-node
-                (ConceptNode (string-append (psi-prefix-str) "Demand"))
-            )
+                (ConceptNode (string-append (psi-prefix-str) "Demand")))
 
             ; NOTE: Not sure this is needed. Possibly use is if one wants
-            ; to measure how changes or define a default-action that updates
-            ; based on the rate of change.
+            ; to measure how the demand-value has changed.
             (EvaluationLink
-                (PredicateNode (string-append (psi-prefix-str) "default_value"))
+                (PredicateNode (string-append (psi-prefix-str) "initial_value"))
                 (ListLink
                     demand-node
-                    (NumberNode default-value)
-                )
-            )
+                    (NumberNode initial-value)))
 
-            ; Add the default action.
-            (psi-action-rule
-                (assoc-ref (psi-demand-pattern) "var")
-                (list
-                    (assoc-ref (psi-demand-pattern) "pat")
-                    ; Filter out all other demands
-                    (EqualLink demand-var demand-node)
-                )
-                default-action
-                demand-node
-                "Default"
-                "Default")
-            ; Each demand is also a rulebase
-            (ure-define-rbs demand-node 1)
-        )
+            demand-node
     )
 )
-
+;
 ; --------------------------------------------------------------
-(define-public (psi-demand? atom)
+(define-public (psi-demand? node)
 "
   Checks whether an atom is The node that satisfies the pattern used
   to define an OpenPsi demand. Returns True-TruthValue `(stv 1 1)` if it is
   and False-TruthValue `(stv 0 1)` if it isn't.
 
-  atom:
-  - The atom that is being checked to see if it is the Node that represents
+  node:
+  - The node that is being checked to see if it is a ConceptNode that represents
     a demand type.
 "
     (define (demand-names)
         (map cog-name (cog-outgoing-set (psi-get-demands-all))))
 
     ; Check arguments
-    (if (not (cog-node? atom))
-        (error "In procedure psi-demand?: Expected a Node got: " atom))
+    (if (not (cog-node? node))
+        (error "In procedure psi-demand?: Expected a Node got: " node))
 
-    (if (and (member (cog-name atom) (demand-names))
-             (equal? (cog-type atom) 'ConceptNode))
+    (if (and (member (cog-name node) (demand-names))
+             (equal? (cog-type node) 'ConceptNode))
         (stv 1 1)
         (stv 0 1)
     )
@@ -282,236 +225,24 @@
 )
 
 ; --------------------------------------------------------------
-(define-public (psi-current-goal)
-"
-  Returns the demand-ConceptNode that has been choosen for action presently.
-"
-
-    (define (get-psi-goal) (cog-bind
-        (BindLink
-            (VariableList (assoc-ref (psi-demand-pattern) "var"))
-            (AndLink
-                (assoc-ref (psi-demand-pattern) "pat")
-                (StateLink
-                    (Node (string-append (psi-prefix-str) "action-on-demand"))
-                    (ChoiceLink
-                        (ListLink
-                            (ConceptNode
-                                (string-append (psi-prefix-str) "Decrease"))
-                            demand-var)
-                        (ListLink
-                            (ConceptNode
-                                (string-append (psi-prefix-str) "Increase"))
-                            demand-var)))
-                (EvaluationLink ; Act only if their is such a demand.
-                    (GroundedPredicateNode "scm: psi-demand?")
-                    (ListLink
-                        demand-var)))
-            demand-var)
-    ))
-
-    (let* ((set-link (get-psi-goal))
-           (result (cog-outgoing-set set-link)))
-
-          (cog-extract set-link)
-          (if (null? result) result  (car result))
-    )
-)
-
+; Functions to help define standard action-rules
 ; --------------------------------------------------------------
-(define-public (psi-action-types)
-"
-  Returns a list of the default action types, that are used to describe how
-  an action affects the demands it is associated with. Don't depend on the
-  order of the list, it might change when effect-types are added/removed.
-  The availabe action types are,
-
-  Increase: increases the demand-value.
-  Decrease: decreases the demand-value.
-  Default: depends on the default-action associated with it. And is used
-           to define how the demand-value should change independent of context.
-           Remember that the effect of this rule could be either increasing or
-           decreasing of the demand-value as well, but wouldn't be known as
-           such.
-"
-    ; NOTE: Update psi-update-asp and psi-get-action-rules-all
-    ; when adding other effect types.
-    (list "Increase" "Decrease" "Default")
-)
-
-; --------------------------------------------------------------
-(define-public (psi-action-rule vars context action demand-node
-                                effect-type name)
-"
-  It associates an action and context in which the action has to be taken
-  to an OpenPsi-demand. The action is also a member rule of the demand it
-  affects, with a weight of one. The returned node defines/aliases the
-  BindLink structured as,
-    (BindLink
-        (VariableList (vars))
-        (AndLink
-            (context)
-            (clauses for differentiating the action))
-        (action))
-
-  A single action could only have one effect-type, thus changing the
-  effect-type will not have any effect, if the action-rule has
-  already been defined in the atomspace with a different effect-type.
-
-  vars:
-    - A list containing the VariableNodes, and their type restrictions, that
-      are part of the context. If there is no type restrictions then pass empty
-      list.
-
-  context:
-    - A list containing the terms/clauses that should be met for this action
-      to be taken. Be careful on how you use Variable naming in the context
-
-  action:
-    - The Implicand of the rule. It should be an atom that uses the groundings
-      of the context to do something.
-
-  demand-node:
-  - The node representing the demand.
-
-  effect-type:
-    - A string that describes the effect the particualr action would have on
-      the demand value. See `(psi-action-types)` for available options.
-
-  name:
-  -  A string for naming the action rule. `OpenPsi: Demand-name-action-rule-`
-     will be prefixed to the name.
-
-"
-    (define rule-name-prefix
-        (string-append (cog-name demand-node) "-action-rule-"))
-    (define rule-name (string-append rule-name-prefix name))
-
-    (define (rule)
-        ; Is function to avoid  insertion into the atomspace if argument check
-        ; fails.
-        (BindLink
-            ; An empty VariableList prevents matchs.
-            (if (equal? '() vars)
-                '()
-                (VariableList vars)
-            )
-            (AndLink
-                context
-                (EvaluationLink ; Act only if their is such a demand.
-                    (GroundedPredicateNode "scm: psi-demand?")
-                    (ListLink demand-node)))
-            action))
-
-    (define (create-psi-action-rule)
-        (let ((alias (ure-add-rule demand-node rule-name (rule) 1)))
-            (InheritanceLink
-                alias
-                (ConceptNode "opencog: action"))
-
-            (EvaluationLink
-                (PredicateNode (string-append (psi-prefix-str) effect-type))
-                (ListLink
-                    alias
-                    demand-node))
-            alias
-        ))
-
-    ; Check arguments
-    (if (not (list? vars))
-        (error "Expected first argument to be a list, got: " vars))
-    (if (not (list? context))
-        (error "Expected second argument to be a list, got: " context))
-    (if (not (cog-atom? action))
-        (error "Expected third argument to be an atom, got: " action))
-    (if (not (member effect-type (psi-action-types)))
-        (error (string-append "Expected fourth argument to be one of the "
-            "action types listed when running `(psi-action-types)`, got: ")
-            effect-type))
-
-    ; Check if the rule has already been defined as a member of
-    ; TODO: this needs improvement not exaustive enough, it isn't considering
-    ;       other differentiating graphs.
-    (let ((node (cog-chase-link 'DefineLink 'Node (rule))))
-        (cond ((and (= 1 (length node))
-                    (string-prefix? rule-name-prefix (cog-name (car node))))
-                     node)
-              ((= 0 (length node))
-               (create-psi-action-rule))
-              (else ; cleanup TODO: Make exaustive
-                  (cog-extract (rule))
-                  (error "The rule has been defined multiple times"))
-        )
-    )
-)
-
-; --------------------------------------------------------------
-(define (psi-action-rule-type dsn)
-"
-  Returns the action-effect-type of the action-rule.
-
-  dsn:
-  - A DefinedSchemaNode that is an alias of an action-rule.
-"
-    ; FIXME; assumes there will only be one EvalutaionLink that types
-    ; the action-rule. Maybe it is best if DefineLink or DefineType
-    ; be used ????
-
-    ; Check arguments
-    (if (or (not (cog-node? dsn))
-            (not (equal? 'DefinedSchemaNode (cog-type dsn))))
-        (error "In procedure psi-action-rule-type:"
-               " Expected a DefinedSchemaNode got: " dsn))
-
-    (car (map
-        (lambda (x) (psi-suffix-str (cog-name (car (cog-outgoing-set x)))))
-         (cog-get-pred dsn 'PredicateNode)))
-)
-
-; --------------------------------------------------------------
-(define-public (psi-current-effect-type)
-"
-  This returns a string of the type of effect that the current-goal has.
-"
-   (define (get-psi-action-type) (cog-execute!
-        (GetLink
-            (TypedVariableLink
-                (VariableNode "effect-type")
-                (TypeNode "ConceptNode"))
-            (StateLink
-                (Node (string-append (psi-prefix-str) "action-on-demand"))
-                (ListLink
-                    (VariableNode "effect-type")
-                    (psi-current-goal))))
-    ))
-
-    (let* ((set-link (get-psi-action-type))
-          (result (cog-outgoing-set set-link)))
-
-          (cog-extract set-link)
-
-          (if (null? result)
-              "Default"
-              (psi-suffix-str (cog-name (car result)))
-          )
-    )
-)
-
-; --------------------------------------------------------------
-(define-public (psi-action-maximize rate)
+(define-public (psi-demand-goal-maximize demand-node rate)
 "
   Returns an ExecutionOutputLink(the action) that increases the demand-value.
   It has an increasing effect on the demand-value.
+
+  demand-node:
+  - A node representing a demand.
 
   rate:
   - A number for the percentage of change that a demand-value will be updated
     with, on each step.
 "
-
-    (ExecutionOutputLink
-        (GroundedSchemaNode "scm: psi-demand-value-maximize")
+    (EvaluationLink
+        (GroundedPredicateNode "scm: psi-demand-value-maximize")
         (ListLink
-            demand-var
+            demand-node
             (NumberNode rate)))
 )
 
@@ -526,58 +257,31 @@
   - A NumberNode for the percentage of change that a demand-value will be
     updated with, on each step.
 "
-
     (let ((strength (tv-mean (cog-tv  demand-node)))
           (conf (tv-conf (cog-tv demand-node)))
           (rate (/ (string->number (cog-name rate-node)) 100)))
         (cog-set-tv! demand-node (stv (+ strength (* strength rate)) conf))
+        (stv 1 1)
     )
 )
 
-(define-public (psi-action-rule-maximize demand-node rate)
-"
-  Creates an action-rule with the effect of increasing the demand-value for the
-  given demand.
-
-  demand-node:
-  - The node representing the demand.
-
-  rate:
-  - A number for the percentage of change that a demand-value will be updated
-    with, on each step. If an action with the same rate of has been defined
-    for the given demand a new action isn't created, but the old one returned.
-"
-
-    ; TODO test for retrun of previously defined action-rule when one tries
-    ; a new action-rule of the same rate  for the same demand.
-    (psi-action-rule
-        (assoc-ref (psi-demand-pattern) "var")
-        (list
-            (assoc-ref (psi-demand-pattern) "pat")
-            ; Filter out all other demands
-            (EqualLink demand-var demand-node)
-        )
-        (psi-action-maximize rate)
-        demand-node
-        "Increase"
-        (string-append "maximize-" (number->string rate)))
-)
-
 ; --------------------------------------------------------------
-(define-public (psi-action-minimize rate)
+(define-public (psi-demand-goal-minimize demand-node rate)
 "
   Returns an ExecutionOutputLink(the action) that decreases the demand-value.
   It has a decreasing effect on the demand value.
+
+  demand-node:
+  - A node representing a demand.
 
   rate:
   - A number for the percentage of change that a demand-value will be updated
     with, on each step.
 "
-
-    (ExecutionOutputLink
-        (GroundedSchemaNode "scm: psi-demand-value-minimize")
+    (EvaluationLink
+        (GroundedPredicateNode "scm: psi-demand-value-minimize")
         (ListLink
-            demand-var
+            demand-node
             (NumberNode rate)))
 )
 
@@ -592,43 +296,16 @@
   - A NumberNode for the percentage of change that a demand-value will be
     updated with, on each step.
 "
-
     (let ((strength (tv-mean (cog-tv  demand-node)))
           (conf (tv-conf (cog-tv demand-node)))
           (rate (/ (string->number (cog-name rate-node)) 100)))
         (cog-set-tv! demand-node (stv (- strength (* strength rate)) conf))
+        (stv 1 1)
     )
 )
 
-(define-public (psi-action-rule-minimize demand-node rate)
-"
-  Creates an action with the effect of decreasing the demand-value for the
-  given demand.
-
-  demand-node:
-  - The node representing the demand.
-
-  rate:
-  - A number for the percentage of change that a demand-value be updated with,
-    on each step. If an action with the same rate of has been defined for the
-    given demand a new action isn't created, but the old one returned.
-"
-
-    (psi-action-rule
-        (assoc-ref (psi-demand-pattern) "var")
-        (list
-            (assoc-ref (psi-demand-pattern) "pat")
-            ; Filter out all other demands
-            (EqualLink demand-var demand-node)
-        )
-        (psi-action-minimize rate)
-        demand-node
-        "Decrease"
-        (string-append "minimize-" (number->string rate)))
-)
-
 ; --------------------------------------------------------------
-(define-public (psi-action-keep-range min-value max-value rate)
+(define-public (psi-demand-goal-keep-range demand-node min-value max-value rate)
 "
   Returns an ExecutionOutputLink(the action) that tries to maintain the
   demand-value within the specified range. If the demand-value is within range
@@ -636,6 +313,9 @@
 
   It is mainily to be used as a default effect-type, as it can increase or
   decrease the demand value.
+
+  demand-node:
+  - A node representing a demand.
 
   min-value:
   - A number for the minimum acceptable demand-value.
@@ -648,31 +328,30 @@
     on each step, should it pass the boundaries.
 "
     ; Check arguments
-    (if (or (> min-value max-value) (>= 0 min-value) (<= 1 max-value))
-       (error "Expected the range to be a subset of (0, 1) interval, got: "
-              (string-append "(" (number->string min-value) ", "
-                  (number->string max-value) ")" ))
+    (if (or (> min-value max-value) (> 0 min-value) (< 1 max-value))
+       (error (string-append "In procedure psi-demand-goal-keep-range expected "
+            "the range to be a subset of [0, 1] interval, got: "
+            "[" (number->string min-value) ", " (number->string max-value) "]"))
     )
     (if (>= 0 rate)
        (error "Expected the percentage of change for the demand value "
               "to be > 0, got: " rate))
 
-    (ExecutionOutputLink
-        (GroundedSchemaNode "scm: psi-demand-value-maximize-range")
+    (EvaluationLink
+        (GroundedPredicateNode "scm: psi-demand-value-maximize-range")
         (ListLink
-            demand-var
+            demand-node
             (NumberNode min-value)
             (NumberNode max-value)
             (NumberNode rate)))
 )
 
-; --------------------------------------------------------------
 (define-public (psi-demand-value-maximize-range
                     demand-node min-node max-node rate-node)
 "
   Increases or decreases the strength of the demand depending on whether it is
   in between the range specified. The range is taken as an open-interval, that
-  must be a subset of (0, 1) interval.
+  must be a subset of [0, 1] interval.
 
   demand-node:
   - The node that represents the demand.
@@ -687,7 +366,6 @@
   - A NumberNode for the percentage of change that a demand-value be updated
     with, should it pass the boundaries. Must be greater than zero.
 "
-
     (let ((mean (tv-mean (cog-tv  demand-node)))
           (min-value (string->number (cog-name min-node)))
           (max-value (string->number (cog-name max-node)))
