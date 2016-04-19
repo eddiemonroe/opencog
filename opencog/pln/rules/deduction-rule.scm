@@ -94,14 +94,15 @@
                 (IntensionalImplicationLink
                     (VariableNode "$A")
                     (VariableNode "$C"))))))
+!#
 
 ; Name the rule
 (define deduction-intensional-implication-rule-name
-    (Node "deduction-intensional-implication-rule"))
+    (DefinedSchemaNode "deduction-intensional-implication-rule"))
 (DefineLink deduction-intensional-implication-rule-name
     deduction-intensional-implication-rule)
 
-!#
+
 
 (define deduction-subset-rule
     (gen-deduction-rule SubsetLink))
